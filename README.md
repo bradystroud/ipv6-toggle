@@ -14,3 +14,6 @@ You can run or build the Swift script using the Swift compiler:
 ```bash
 swiftc main.swift -o IPv6Toggle
 ```
+
+<img width="894" height="531" alt="image" src="https://github.com/user-attachments/assets/53176a4c-04b7-4b83-9eb0-3bb7162a450c" />
+
