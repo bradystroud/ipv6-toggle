@@ -13,5 +13,10 @@ rm -rf "$APP_PATH"
 # Kill any lingering instance launched outside launchd.
 pkill -f "$APP_NAME" 2>/dev/null || true
 
+if [ -f /etc/sudoers.d/ipv6-toggle ]; then
+    echo "Removing the password-free sudo rule..."
+    sudo rm -f /etc/sudoers.d/ipv6-toggle
+fi
+
 echo "Uninstalled $APP_NAME (LaunchAgent removed, app deleted)."
 echo "Note: this does not change your current IPv6 setting."

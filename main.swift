@@ -58,11 +58,42 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         task.launch()
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         guard let output = String(data: data, encoding: .utf8) else { return }
-        
+
         let isOff = output.contains("IPv6: Off")
-        let command = isOff ? "networksetup -setv6automatic Wi-Fi" : "networksetup -setv6off Wi-Fi"
-        
-        let scriptSource = "do shell script \"\(command)\" with administrator privileges"
+        // These two argument vectors must stay byte-for-byte identical to the entries in
+        // /etc/sudoers.d/ipv6-toggle. sudo matches the full command line, so any change
+        // here (a different interface name, an extra flag) silently stops matching and
+        // the app falls back to prompting for a password.
+        let command = ["/usr/sbin/networksetup", isOff ? "-setv6automatic" : "-setv6off", "Wi-Fi"]
+
+        if !runWithSudoNoPrompt(command) {
+            runWithAdminPrompt(command)
+        }
+
+        // Update UI immediately after toggling
+        updateStatus()
+    }
+
+    /// Runs the command via `sudo -n`, which never prompts: it succeeds only if a sudoers
+    /// rule grants this exact command NOPASSWD. Returns false when no such rule exists,
+    /// so the caller can fall back to the interactive prompt.
+    private func runWithSudoNoPrompt(_ command: [String]) -> Bool {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/sudo")
+        task.arguments = ["-n"] + command
+        task.standardOutput = FileHandle.nullDevice
+        task.standardError = FileHandle.nullDevice
+        do {
+            try task.run()
+            task.waitUntilExit()
+            return task.terminationStatus == 0
+        } catch {
+            return false
+        }
+    }
+
+    private func runWithAdminPrompt(_ command: [String]) {
+        let scriptSource = "do shell script \"\(command.joined(separator: " "))\" with administrator privileges"
         if let script = NSAppleScript(source: scriptSource) {
             var error: NSDictionary?
             script.executeAndReturnError(&error)
@@ -70,9 +101,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 print("Error: \(err)")
             }
         }
-        
-        // Update UI immediately after toggling
-        updateStatus()
     }
     
     @objc func quit() {

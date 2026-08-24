@@ -35,6 +35,14 @@ EOF
 
 # Reload cleanly (ignore error if it wasn't loaded yet), then start it now.
 launchctl bootout "gui/$(id -u)/$BUNDLE_ID" 2>/dev/null || true
+
+# bootout returns before launchd has finished tearing the service down, and bootstrapping
+# a label that is still unloading fails with "Input/output error". Wait for it to go.
+for _ in $(seq 1 50); do
+    launchctl print "gui/$(id -u)/$BUNDLE_ID" >/dev/null 2>&1 || break
+    sleep 0.1
+done
+
 launchctl bootstrap "gui/$(id -u)" "$PLIST"
 
 echo "Done. $APP_NAME is running now and will start automatically at login."
