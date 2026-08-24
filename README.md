@@ -23,6 +23,18 @@ To remove it (LaunchAgent + app), run:
 ```
 Uninstalling does not change your current IPv6 setting.
 
+## Updating
+Pull the latest version and re-run the installer:
+```bash
+git pull
+./install.sh
+```
+This rebuilds the app and restarts it. Your current IPv6 setting is not changed.
+
+If you want to stop the password prompt on every toggle, also run `./install-sudoers.sh`
+once — see [Skipping the password prompt](#skipping-the-password-prompt). Without it the
+app keeps prompting exactly as before, so nothing breaks if you skip this.
+
 ## Skipping the password prompt
 By default every toggle asks for authentication. To make it instant, install a sudoers rule
 that whitelists just the two commands this app runs:
